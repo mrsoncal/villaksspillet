@@ -94,7 +94,19 @@ Kilder brukt som faglig utgangspunkt:
 
 ## Publisering
 
-Prosjektet er en statisk Vite-app og kan publiseres direkte på Vercel:
+### GitHub Pages
+
+GitHub Pages må publisere den bygde Vite-appen, ikke `index.html` i kildekodens rotmappe. I repoets **Settings → Pages → Build and deployment** velger du **GitHub Actions** som Source. Arbeidsflyten i `.github/workflows/deploy-pages.yml` bygger og publiserer `dist/` automatisk ved push til `main` (eller manuelt fra Actions-fanen). Nettadressen er `https://mrsoncal.github.io/villaksspillet/`.
+
+For å kontrollere Pages-bygget lokalt:
+
+```bash
+npm run build:pages
+```
+
+Dette bygget setter Vites base-sti til `/villaksspillet/`. Det vanlige `npm run build` beholder `/` for andre verter.
+
+### Vercel
 
 1. Importer prosjektmappen eller Git-repositoriet i Vercel.
 2. Velg rammeverk **Vite**.
