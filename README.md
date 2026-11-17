@@ -96,7 +96,6 @@ Kilder brukt som faglig utgangspunkt:
 
 ### GitHub Pages
 
-<<<<<<< HEAD
 GitHub Pages må publisere den bygde Vite-appen, ikke `index.html` i kildekodens rotmappe. I repoets **Settings → Pages → Build and deployment** velger du **GitHub Actions** som Source. Arbeidsflyten i `.github/workflows/deploy-pages.yml` bygger og publiserer `dist/` automatisk ved push til `main` (eller manuelt fra Actions-fanen). Nettadressen er `https://mrsoncal.github.io/villaksspillet/`.
 
 For å kontrollere Pages-bygget lokalt:
@@ -107,21 +106,30 @@ npm run build:pages
 
 Dette bygget setter Vites base-sti til `/villaksspillet/`. Det vanlige `npm run build` beholder `/` for andre verter.
 
-### Vercel
-=======
-Velg **GitHub Actions** under **Settings → Pages → Build and deployment → Source**
-i GitHub-repositoriet. Arbeidsflyten **Deploy to GitHub Pages** bygger og
-publiserer deretter automatisk ved push til `main`. Den kan også startes manuelt
-fra **Actions → Deploy to GitHub Pages → Run workflow**.
+### Vis spillet på WordPress
 
-Spillet publiseres på `https://mrsoncal.github.io/villaksspillet/`.
-Arbeidsflyten setter Vites basebane fra GitHub Pages-konfigurasjonen slik at
-JavaScript, CSS og spillressurser lastes riktig fra undermappen.
+Lim inn dette i en **Custom HTML / Tilpasset HTML**-blokk på den siden eller i den delen av WordPress-nettstedet hvor spillet skal vises:
+
+```html
+<iframe
+  src="https://mrsoncal.github.io/villaksspillet/"
+  title="Villaks – Reisen hjem"
+  width="100%"
+  height="720"
+  style="display:block;width:100%;height:clamp(560px,80vh,900px);border:0;"
+  loading="lazy"
+  allow="fullscreen"
+  allowfullscreen
+></iframe>
+```
+
+Rammen fyller bredden til seksjonen og tilpasser høyden til skjermen. Når en push til `main` er publisert av GitHub Pages, viser den samme rammen automatisk den oppdaterte versjonen. WordPress trenger ingen tilgang til spillets kode eller egen plugin: spillet bruker verken WordPress-innlogging eller WordPress-innhold.
+
+WordPress kan fjerne `<iframe>` fra Custom HTML hvis kontoen ikke har tillatelse til ufiltrert HTML. I så fall må en nettstedsadministrator gi riktig tilgang eller legge inn rammen i en tillatt mal/blokk.
 
 ### Vercel
 
 Prosjektet er en statisk Vite-app og kan publiseres direkte på Vercel:
->>>>>>> 9d37dd6a9aca4caff3be80b91df3385a561fb539
 
 1. Importer prosjektmappen eller Git-repositoriet i Vercel.
 2. Velg rammeverk **Vite**.
