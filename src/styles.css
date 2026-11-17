@@ -236,6 +236,7 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 .menu-card h1 { color: var(--park-white); }
 .menu-card .kicker { color: var(--park-white); }
 .menu-card h1 em, .menu-card .subtitle { color: var(--park-stone); }
+.menu-credit { position: absolute; z-index: 2; right: max(24px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); margin: 0; color: var(--park-stone); font-size: .82rem; font-weight: 600; text-align: right; text-shadow: 0 1px 5px rgba(0, 28, 36, .75); }
 .menu-actions { max-width: 360px; }
 .primary-button, .secondary-button, .text-button, .quiet-button { border-radius: 0; }
 .primary-button { background: var(--park-orange); color: #3c2819; box-shadow: 0 10px 25px rgba(1,28,34,.24); font-weight: 800; }
@@ -266,8 +267,9 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 
 @media (max-width: 760px) {
   .app { min-height: 440px; }
-  .menu-screen { overflow-y: auto; align-items: start; }
+  .menu-screen { overflow-y: auto; align-items: start; padding-bottom: 58px; }
   .menu-card { margin: auto; padding: 26px 22px; border-radius: 0; }
+  .menu-credit { right: max(16px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); font-size: .76rem; }
   .how-grid { grid-template-columns: 1fr; gap: 9px; }.instruction { display: grid; grid-template-columns: 62px 1fr; text-align: left; padding: 14px; }.instruction-icon { grid-row: 1 / span 2; width: 52px; height: 52px; margin: 0; font-size: 1.3rem; }.instruction h3 { margin: 4px 0 2px; }.instruction p { margin: 0; }.instruction-icon b { width: 21px; height: 21px; }
   .intro-screen { grid-template-columns: 1fr; padding: 18px; overflow-y: auto; }.level-art { min-height: 145px; max-height: 25vh; }.stage-fish { width: min(92%, 360px); max-height: 180px; }.intro-card { margin: 0 auto; padding: 28px 23px; border-radius: 0; }.intro-card h2 { font-size: 2.15rem; }.intro-card > p:not(.kicker) { font-size: .92rem; }.goal-box { margin: 18px 0; padding: 12px; }
   .hud { padding: max(9px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-right)) max(9px, env(safe-area-inset-bottom)) max(9px, env(safe-area-inset-left)); }

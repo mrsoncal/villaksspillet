@@ -233,6 +233,7 @@ function App() {
               <button className="primary-button" onClick={() => startLevel(1)}><span>Start spillet</span><b aria-hidden="true">→</b></button>
             </div>
           </div>
+          <p className="menu-credit">Laget av Sondre Callaerts</p>
         </section>
       )}
 
