@@ -245,8 +245,15 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 .difficulty-description { min-height: 2.5em; margin: 0 0 5px; color: var(--park-stone); font-size: .82rem; line-height: 1.4; }
 .fullscreen-button { position: absolute; z-index: 60; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); display: grid; place-items: center; width: 57px; height: 57px; border: 1px solid var(--park-orange); background: var(--park-orange); color: #3c2819; cursor: pointer; box-shadow: 0 10px 25px rgba(1,28,34,.24); }
 .fullscreen-button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.fullscreen-error { position: absolute; z-index: 61; top: 78px; right: 14px; max-width: min(330px, 70vw); padding: 10px 14px; background: var(--park-fjord); color: var(--park-white); font-size: .8rem; box-shadow: 0 10px 25px rgba(1,28,34,.24); }
+.fullscreen-fallback-shade { position: absolute; z-index: 90; inset: 0; display: grid; place-items: center; padding: 14px; background: rgba(1,28,39,.88); backdrop-filter: blur(12px); }
+.fullscreen-fallback-card { width: min(460px, 100%); max-height: calc(100dvh - 28px); overflow-y: auto; padding: clamp(22px, 5vw, 36px); border-top: 5px solid var(--park-green); text-align: center; }
+.fullscreen-fallback-card h2 { margin-bottom: 15px; font-size: clamp(2rem, 6vw, 2.8rem); }
+.fullscreen-fallback-card p:not(.kicker) { color: var(--park-stone); font-size: .95rem; line-height: 1.45; }
+.fullscreen-fallback-card p.fullscreen-restart-note { font-size: .8rem; }
+.fullscreen-fallback-card .primary-button { margin-top: 18px; text-decoration: none; }
+.fullscreen-fallback-card .quiet-button { width: 100%; margin-top: 8px; }
 .hud-top .pause-button { margin-right: 67px; }
+.app.standalone .hud-top .pause-button { margin-right: 0; }
 .loading-shade, .rotate-overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(1,28,39,.84); backdrop-filter: blur(10px); }
 .loading-shade { z-index: 25; }
 .loading-card, .rotate-card { width: min(390px, 92vw); padding: 32px; text-align: center; border-top: 5px solid var(--park-green); }
@@ -312,7 +319,17 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 
 @media (max-height: 620px) and (orientation: landscape) {
   .app { min-height: 0; }
-  .menu-card { padding: 22px 32px; width: 580px; } h1 { font-size: 3.4rem; }.subtitle { margin-bottom: 15px; }.progress-note { display: none; }
+  .menu-screen { overflow-y: auto; padding: 10px 16px; }
+  .menu-card { width: min(580px, calc(100vw - 150px)); margin: auto; padding: 14px 22px; }
+  .menu-card::before { margin-bottom: 9px; }
+  .menu-card .kicker { margin-bottom: 5px; font-size: .68rem; }
+  .menu-card h1 { margin-bottom: 7px; font-size: 2.8rem; }
+  .menu-card .subtitle { margin-bottom: 9px; font-size: .96rem; }
+  .menu-actions { gap: 5px; }
+  .difficulty-choice button { min-height: 37px; }
+  .difficulty-description { min-height: 0; margin-bottom: 2px; font-size: .72rem; line-height: 1.25; }
+  .menu-card .primary-button { min-height: 46px; padding: 9px 16px; }
+  .progress-note { display: none; }
   .intro-screen { grid-template-columns: .85fr 1.15fr; overflow-y: auto; }.level-art { min-height: 280px; max-height: none; }.intro-card { padding: 24px 30px; }.intro-card h2 { font-size: 2rem; margin-bottom: 10px; }.goal-box { margin: 10px 0; }.quiet-button { display: none; }
   .modal-card { padding: 26px 48px; }.modal-card h2 { font-size: 2.5rem; margin-bottom: 10px; }.how-grid { grid-template-columns: repeat(3, 1fr); }.instruction { display: block; text-align: center; }.instruction-icon { margin: 0 auto 8px; }.instruction p { font-size: .75rem; }.fact-card { margin: 12px auto; padding: 13px; }.stars { font-size: 3rem; }.result-page .stars { font-size: 3.2rem; margin: 0 0 8px; }.result-stats { margin: 10px 0; }
 }

@@ -116,14 +116,14 @@ Lim inn dette i en **Custom HTML / Tilpasset HTML**-blokk på den siden eller i 
   title="Villaks – Reisen hjem"
   width="100%"
   height="720"
-  style="display:block;width:100%;height:clamp(560px,80vh,900px);border:0;"
+  style="display:block;width:100%;height:80vh;height:min(900px,100dvh);min-height:300px;border:0;"
   loading="lazy"
   allow="fullscreen"
   allowfullscreen
 ></iframe>
 ```
 
-Rammen fyller bredden til seksjonen og tilpasser høyden til skjermen. `allow="fullscreen"` og `allowfullscreen` er nødvendig for spillets fullskjermknapp. På mobil og nettbrett må spilleren rotere til liggende format; automatisk skjermlås forsøkes bare der nettleseren støtter det. Når en push til `main` er publisert av GitHub Pages, viser den samme rammen automatisk den oppdaterte versjonen. WordPress trenger ingen tilgang til spillets kode eller egen plugin: spillet bruker verken WordPress-innlogging eller WordPress-innhold.
+Rammen fyller bredden og bruker skjermhøyden også i liggende mobilformat, uten en kunstig minimumshøyde på 560 px. `allow="fullscreen"` og `allowfullscreen` trengs for nettlesere som støtter ekte fullskjerm i iframe. På iPhone er dette ikke tilgjengelig for vanlige spillelementer; hvis fullskjerm blokkeres, tilbyr spillet en lenke som åpner det utenfor WordPress-rammen. Fra Safari kan brukeren velge **Del → Legg til på Hjem-skjermen** for appvisning. På mobil og nettbrett må spilleren rotere til liggende format; automatisk skjermlås forsøkes bare der nettleseren støtter det. Når en push til `main` er publisert av GitHub Pages, viser den samme rammen automatisk den oppdaterte versjonen. WordPress trenger ingen tilgang til spillets kode eller egen plugin: spillet bruker verken WordPress-innlogging eller WordPress-innhold.
 
 WordPress kan fjerne `<iframe>` fra Custom HTML hvis kontoen ikke har tillatelse til ufiltrert HTML. I så fall må en nettstedsadministrator gi riktig tilgang eller legge inn rammen i en tillatt mal/blokk.
 

@@ -11,7 +11,13 @@ import salmonSpawningArt from './assets/salmon-stage-4-spawning-v3.png'
 type Screen = 'menu' | 'intro' | 'playing' | 'death' | 'result' | 'victory'
 type Difficulty = 'normal' | 'hardcore'
 type HighScores = Record<Difficulty, number | null>
+type WebkitFullscreenDocument = Document & { webkitFullscreenElement?: Element | null; webkitFullscreenEnabled?: boolean; webkitExitFullscreen?: () => void | Promise<void> }
+type WebkitFullscreenElement = HTMLElement & { webkitRequestFullscreen?: () => void | Promise<void> }
 const HIGH_SCORES_KEY = 'villaks-high-scores-v2'
+
+function currentFullscreenElement() {
+  return document.fullscreenElement || (document as WebkitFullscreenDocument).webkitFullscreenElement
+}
 
 function needsLandscape() {
   if (!window.matchMedia('(pointer: coarse)').matches) return false
@@ -116,8 +122,8 @@ function App() {
   const [showLoading, setShowLoading] = useState(Boolean(qaLevel))
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [rotateRequired, setRotateRequired] = useState(needsLandscape)
-  const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement))
-  const [fullscreenError, setFullscreenError] = useState('')
+  const [isFullscreen, setIsFullscreen] = useState(Boolean(currentFullscreenElement()))
+  const [fullscreenFallback, setFullscreenFallback] = useState(false)
   const [result, setResult] = useState<GameResult | null>(null)
   const [runResults, setRunResults] = useState<GameResult[]>([])
   const [highScores, setHighScores] = useState<HighScores>(loadHighScores)
@@ -129,6 +135,10 @@ function App() {
   const totalTime = runResults.reduce((sum, levelResult) => sum + levelResult.elapsed, 0)
   const totalStars = runResults.reduce((sum, levelResult) => sum + levelResult.stars, 0)
   const totalScore = journeyScore(totalStars, totalTime)
+  const isEmbedded = window.self !== window.top
+  const isAppleTouch = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isStandalone = window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+  const directGameUrl = new URL(import.meta.env.BASE_URL, window.location.origin).href
 
   const updatePreferences = (patch: Partial<Preferences>) => {
     setPreferences((current) => {
@@ -188,14 +198,16 @@ function App() {
 
   useEffect(() => {
     const updateOrientation = () => setRotateRequired(needsLandscape())
-    const updateFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    const updateFullscreen = () => setIsFullscreen(Boolean(currentFullscreenElement()))
     window.addEventListener('resize', updateOrientation)
     window.screen.orientation?.addEventListener('change', updateOrientation)
     document.addEventListener('fullscreenchange', updateFullscreen)
+    document.addEventListener('webkitfullscreenchange', updateFullscreen)
     return () => {
       window.removeEventListener('resize', updateOrientation)
       window.screen.orientation?.removeEventListener('change', updateOrientation)
       document.removeEventListener('fullscreenchange', updateFullscreen)
+      document.removeEventListener('webkitfullscreenchange', updateFullscreen)
     }
   }, [])
 
@@ -229,12 +241,12 @@ function App() {
   }, [screen, paused])
 
   useEffect(() => {
-    if (screen === 'playing') gameBus.emit(paused || loading || rotateRequired ? 'pause' : 'resume')
-  }, [paused, loading, rotateRequired, screen])
+    if (screen === 'playing') gameBus.emit(paused || loading || rotateRequired || fullscreenFallback ? 'pause' : 'resume')
+  }, [paused, loading, rotateRequired, fullscreenFallback, screen])
 
   useEffect(() => {
-    if (screen !== 'playing' || paused || loading || rotateRequired) soundscapeRef.current?.stopSwimming()
-  }, [screen, paused, loading, rotateRequired])
+    if (screen !== 'playing' || paused || loading || rotateRequired || fullscreenFallback) soundscapeRef.current?.stopSwimming()
+  }, [screen, paused, loading, rotateRequired, fullscreenFallback])
 
   const startLevel = (id: LevelId) => {
     if (id === 1) setRunResults([])
@@ -276,19 +288,26 @@ function App() {
   }
 
   const toggleFullscreen = async () => {
-    setFullscreenError('')
+    const legacyDocument = document as WebkitFullscreenDocument
+    const gameElement = appRef.current as WebkitFullscreenElement | null
     try {
       if (document.fullscreenElement) {
         await document.exitFullscreen()
-      } else if (appRef.current?.requestFullscreen) {
-        await appRef.current.requestFullscreen()
+      } else if (legacyDocument.webkitFullscreenElement) {
+        await legacyDocument.webkitExitFullscreen?.()
+      } else if (gameElement?.requestFullscreen && document.fullscreenEnabled !== false) {
+        await gameElement.requestFullscreen()
         const orientation = window.screen.orientation as ScreenOrientation & { lock?: (mode: 'landscape') => Promise<void> }
         try { await orientation?.lock?.('landscape') } catch { /* manual rotation remains available */ }
+      } else if (gameElement?.webkitRequestFullscreen && legacyDocument.webkitFullscreenEnabled !== false) {
+        await gameElement.webkitRequestFullscreen()
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        if (!currentFullscreenElement()) setFullscreenFallback(true)
       } else {
-        setFullscreenError('Fullskjerm støttes ikke i denne nettleseren. Roter skjermen manuelt.')
+        setFullscreenFallback(true)
       }
     } catch {
-      setFullscreenError('Fullskjerm ble blokkert. Åpne spillet direkte eller tillat fullskjerm for iframen.')
+      setFullscreenFallback(true)
     }
   }
 
@@ -305,12 +324,11 @@ function App() {
   const levelData = LEVELS[level]
 
   return (
-    <main ref={appRef} className={`app ${preferences.reducedMotion ? 'reduced-motion' : ''}`}>
+    <main ref={appRef} className={`app ${preferences.reducedMotion ? 'reduced-motion' : ''} ${isStandalone ? 'standalone' : ''}`}>
       <div className="screen-transition-veil" key={`${screen}-${level}`} aria-hidden="true" />
-      <button className="fullscreen-button" type="button" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Avslutt fullskjerm' : 'Vis spillet i fullskjerm'} title={isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm'}>
+      {!isStandalone && <button className="fullscreen-button" type="button" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Avslutt fullskjerm' : 'Vis spillet i fullskjerm'} title={isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm'}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d={isFullscreen ? 'M9 3v6H3m12-6v6h6M3 15h6v6m12-6h-6v6' : 'M3 9V3h6m6 0h6v6M3 15v6h6m12-6v6h-6'} /></svg>
-      </button>
-      {fullscreenError && <p className="fullscreen-error" role="status">{fullscreenError}</p>}
+      </button>}
       {screen === 'menu' && (
         <section className="menu-screen water-bg">
           <RiverBackdrop />
@@ -396,7 +414,16 @@ function App() {
           </div>
         </section>
       )}
-      {rotateRequired && <div className="rotate-overlay" role="dialog" aria-modal="true" aria-label="Roter skjermen"><div className="rotate-card glass-panel"><span className="rotate-symbol" aria-hidden="true">↻</span><h2>Roter skjermen</h2><p>Spillet må spilles i liggende format. Snu mobilen eller nettbrettet for å fortsette.</p><button className="secondary-button" type="button" onClick={toggleFullscreen}>Prøv fullskjerm</button></div></div>}
+      {rotateRequired && <div className="rotate-overlay" role="dialog" aria-modal="true" aria-label="Roter skjermen"><div className="rotate-card glass-panel"><span className="rotate-symbol" aria-hidden="true">↻</span><h2>Roter skjermen</h2><p>Spillet må spilles i liggende format. Snu mobilen eller nettbrettet for å fortsette.</p>{!isStandalone && <button className="secondary-button" type="button" onClick={toggleFullscreen}>Større visning</button>}</div></div>}
+      {fullscreenFallback && <div className="fullscreen-fallback-shade" role="dialog" aria-modal="true" aria-label="Fullskjerm er ikke tilgjengelig"><div className="fullscreen-fallback-card glass-panel">
+        <p className="kicker">Større spillflate</p>
+        <h2>Åpne spillet direkte</h2>
+        <p>{isEmbedded ? 'Fullskjerm er blokkert eller ikke støttet inne i denne rammen. Åpne spillet direkte for større visning.' : isAppleTouch ? 'Denne nettleseren støtter ikke ekte fullskjerm for selve spillet.' : 'Denne nettleseren støtter ikke fullskjerm for spillet.'}</p>
+        {isAppleTouch && <p>På iPhone eller iPad kan du åpne siden i Safari og velge Del → Legg til på Hjem-skjermen for appvisning uten nettleserfelt.</p>}
+        {screen === 'playing' && <p className="fullscreen-restart-note">En ny fane starter spillet på nytt.</p>}
+        {isEmbedded && <a className="primary-button" href={directGameUrl} target="_blank" rel="noopener noreferrer"><span>Åpne i ny fane</span><b aria-hidden="true">↗</b></a>}
+        <button className="quiet-button" type="button" onClick={() => setFullscreenFallback(false)}>Fortsett her</button>
+      </div></div>}
     </main>
   )
 }

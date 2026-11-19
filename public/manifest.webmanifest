@@ -1,0 +1,14 @@
+{
+  "name": "Villaks – Reisen hjem",
+  "short_name": "Villaks",
+  "description": "Følg villaksen fra Mandalselva til havet og hjem igjen.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#063f55",
+  "theme_color": "#068484",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
