@@ -249,9 +249,7 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 .fullscreen-fallback-card { width: min(460px, 100%); max-height: calc(100dvh - 28px); overflow-y: auto; padding: clamp(22px, 5vw, 36px); border-top: 5px solid var(--park-green); text-align: center; }
 .fullscreen-fallback-card h2 { margin-bottom: 15px; font-size: clamp(2rem, 6vw, 2.8rem); }
 .fullscreen-fallback-card p:not(.kicker) { color: var(--park-stone); font-size: .95rem; line-height: 1.45; }
-.fullscreen-fallback-card p.fullscreen-restart-note { font-size: .8rem; }
-.fullscreen-fallback-card .primary-button { margin-top: 18px; text-decoration: none; }
-.fullscreen-fallback-card .quiet-button { width: 100%; margin-top: 8px; }
+.fullscreen-fallback-card .primary-button { justify-content: center; margin-top: 18px; }
 .hud-top .pause-button { margin-right: 67px; }
 .app.standalone .hud-top .pause-button { margin-right: 0; }
 .loading-shade, .rotate-overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(1,28,39,.84); backdrop-filter: blur(10px); }
@@ -263,7 +261,6 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 .loading-bar span { display: block; height: 100%; background: var(--park-green); transition: width .15s ease; }
 .rotate-overlay { z-index: 70; }
 .rotate-card p { color: var(--park-stone); line-height: 1.45; }
-.rotate-card .secondary-button { width: 100%; margin-top: 8px; }
 .rotate-symbol { display: block; margin-bottom: 10px; color: var(--park-orange); font-size: 3rem; line-height: 1; }
 .victory-stats span { max-width: 340px; }
 .victory-stats b { font-size: clamp(2.4rem, 7vw, 4rem); color: var(--park-orange); font-variant-numeric: tabular-nums; }

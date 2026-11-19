@@ -135,10 +135,7 @@ function App() {
   const totalTime = runResults.reduce((sum, levelResult) => sum + levelResult.elapsed, 0)
   const totalStars = runResults.reduce((sum, levelResult) => sum + levelResult.stars, 0)
   const totalScore = journeyScore(totalStars, totalTime)
-  const isEmbedded = window.self !== window.top
-  const isAppleTouch = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   const isStandalone = window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
-  const directGameUrl = new URL(import.meta.env.BASE_URL, window.location.origin).href
 
   const updatePreferences = (patch: Partial<Preferences>) => {
     setPreferences((current) => {
@@ -414,15 +411,12 @@ function App() {
           </div>
         </section>
       )}
-      {rotateRequired && <div className="rotate-overlay" role="dialog" aria-modal="true" aria-label="Roter skjermen"><div className="rotate-card glass-panel"><span className="rotate-symbol" aria-hidden="true">↻</span><h2>Roter skjermen</h2><p>Spillet må spilles i liggende format. Snu mobilen eller nettbrettet for å fortsette.</p>{!isStandalone && <button className="secondary-button" type="button" onClick={toggleFullscreen}>Større visning</button>}</div></div>}
+      {rotateRequired && <div className="rotate-overlay" role="dialog" aria-modal="true" aria-label="Roter skjermen"><div className="rotate-card glass-panel"><span className="rotate-symbol" aria-hidden="true">↻</span><h2>Roter skjermen</h2><p>Spillet må spilles i liggende format. Snu mobilen eller nettbrettet for å fortsette.</p></div></div>}
       {fullscreenFallback && <div className="fullscreen-fallback-shade" role="dialog" aria-modal="true" aria-label="Fullskjerm er ikke tilgjengelig"><div className="fullscreen-fallback-card glass-panel">
-        <p className="kicker">Større spillflate</p>
-        <h2>Åpne spillet direkte</h2>
-        <p>{isEmbedded ? 'Fullskjerm er blokkert eller ikke støttet inne i denne rammen. Åpne spillet direkte for større visning.' : isAppleTouch ? 'Denne nettleseren støtter ikke ekte fullskjerm for selve spillet.' : 'Denne nettleseren støtter ikke fullskjerm for spillet.'}</p>
-        {isAppleTouch && <p>På iPhone eller iPad kan du åpne siden i Safari og velge Del → Legg til på Hjem-skjermen for appvisning uten nettleserfelt.</p>}
-        {screen === 'playing' && <p className="fullscreen-restart-note">En ny fane starter spillet på nytt.</p>}
-        {isEmbedded && <a className="primary-button" href={directGameUrl} target="_blank" rel="noopener noreferrer"><span>Åpne i ny fane</span><b aria-hidden="true">↗</b></a>}
-        <button className="quiet-button" type="button" onClick={() => setFullscreenFallback(false)}>Fortsett her</button>
+        <p className="kicker">Fullskjerm</p>
+        <h2>Ikke tilgjengelig</h2>
+        <p>Nettleseren på denne enheten støtter ikke fullskjerm for spillet.</p>
+        <button className="primary-button" type="button" onClick={() => setFullscreenFallback(false)}>OK</button>
       </div></div>}
     </main>
   )
