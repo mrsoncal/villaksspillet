@@ -9,8 +9,21 @@ import salmonOceanArt from './assets/salmon-stage-3-ocean-v3.png'
 import salmonSpawningArt from './assets/salmon-stage-4-spawning-v3.png'
 
 type Screen = 'menu' | 'intro' | 'playing' | 'death' | 'result' | 'victory'
-type HighScores = { bestTime: number | null; bestStars: number | null }
-const HIGH_SCORES_KEY = 'villaks-high-scores-v1'
+type Difficulty = 'normal' | 'hardcore'
+type HighScores = Record<Difficulty, number | null>
+const HIGH_SCORES_KEY = 'villaks-high-scores-v2'
+
+function needsLandscape() {
+  if (!window.matchMedia('(pointer: coarse)').matches) return false
+  const orientation = window.screen.orientation?.type
+  if (orientation) return orientation.startsWith('portrait')
+  if (window.screen.width !== window.screen.height) return window.screen.width < window.screen.height
+  return window.matchMedia('(orientation: portrait)').matches
+}
+
+function journeyScore(stars: number, elapsed: number) {
+  return stars * 1000 + Math.round(999 / (1 + elapsed / 600))
+}
 
 const LEVELS = {
   1: {
@@ -76,11 +89,11 @@ function loadHighScores(): HighScores {
   try {
     const stored = JSON.parse(localStorage.getItem(HIGH_SCORES_KEY) || '{}') as Partial<HighScores>
     return {
-      bestTime: typeof stored.bestTime === 'number' && Number.isFinite(stored.bestTime) && stored.bestTime > 0 ? stored.bestTime : null,
-      bestStars: typeof stored.bestStars === 'number' && Number.isInteger(stored.bestStars) && stored.bestStars >= 0 && stored.bestStars <= 12 ? stored.bestStars : null,
+      normal: typeof stored.normal === 'number' && Number.isFinite(stored.normal) && stored.normal > 0 ? stored.normal : null,
+      hardcore: typeof stored.hardcore === 'number' && Number.isFinite(stored.hardcore) && stored.hardcore > 0 ? stored.hardcore : null,
     }
   } catch {
-    return { bestTime: null, bestStars: null }
+    return { normal: null, hardcore: null }
   }
 }
 
@@ -90,19 +103,32 @@ function secondsLabel(seconds: number) {
 }
 
 function App() {
+  const appRef = useRef<HTMLElement>(null)
   const [preferences, setPreferences] = useState<Preferences>(() => loadPreferences())
   const qaLevelValue = import.meta.env.DEV ? Number(new URLSearchParams(window.location.search).get('qaLevel')) : 0
   const qaLevel = ([1, 2, 3, 4] as number[]).includes(qaLevelValue) ? qaLevelValue as LevelId : undefined
   const [screen, setScreen] = useState<Screen>(qaLevel ? 'playing' : 'menu')
   const [level, setLevel] = useState<LevelId>(qaLevel ?? 1)
+  const [deathLevel, setDeathLevel] = useState<LevelId>(1)
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal')
   const [paused, setPaused] = useState(false)
+  const [loading, setLoading] = useState(Boolean(qaLevel))
+  const [showLoading, setShowLoading] = useState(Boolean(qaLevel))
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [rotateRequired, setRotateRequired] = useState(needsLandscape)
+  const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement))
+  const [fullscreenError, setFullscreenError] = useState('')
   const [result, setResult] = useState<GameResult | null>(null)
   const [runResults, setRunResults] = useState<GameResult[]>([])
   const [highScores, setHighScores] = useState<HighScores>(loadHighScores)
   const [hud, setHud] = useState<HudState>({ level: qaLevel ?? 1, lives: 3, stamina: 100, food: 0, foodTarget: qaLevel === 4 ? 0 : 8, hint: 'Trykk i vannet for å svømme', hidden: false })
   const soundscapeRef = useRef<Soundscape | null>(null)
+  const loadingShownAt = useRef<number | null>(qaLevel ? performance.now() : null)
+  const showLoadingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const readyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const totalTime = runResults.reduce((sum, levelResult) => sum + levelResult.elapsed, 0)
   const totalStars = runResults.reduce((sum, levelResult) => sum + levelResult.stars, 0)
+  const totalScore = journeyScore(totalStars, totalTime)
 
   const updatePreferences = (patch: Partial<Preferences>) => {
     setPreferences((current) => {
@@ -120,6 +146,27 @@ function App() {
   }
 
   useEffect(() => gameBus.on('hud', setHud), [])
+  useEffect(() => gameBus.on('loading', ({ level: loadingLevel, progress }) => {
+    if (loadingLevel === level) setLoadingProgress(Math.round(progress * 100))
+  }), [level])
+  useEffect(() => gameBus.on('ready', (readyLevel) => {
+    if (readyLevel !== level) return
+    gameBus.emit('pause')
+    if (showLoadingTimer.current) clearTimeout(showLoadingTimer.current)
+    showLoadingTimer.current = null
+    if (readyTimer.current) clearTimeout(readyTimer.current)
+    readyTimer.current = setTimeout(() => {
+      setLoadingProgress(100)
+      setLoading(false)
+      setShowLoading(false)
+      loadingShownAt.current = null
+      readyTimer.current = null
+    }, loadingShownAt.current === null ? 0 : Math.max(0, 300 - (performance.now() - loadingShownAt.current)))
+  }), [level])
+  useEffect(() => () => {
+    if (showLoadingTimer.current) clearTimeout(showLoadingTimer.current)
+    if (readyTimer.current) clearTimeout(readyTimer.current)
+  }, [])
   useEffect(() => gameBus.on('sound', (effect) => sound(effect)), [preferences.sound])
   useEffect(() => gameBus.on('swimming', (movement) => soundscapeRef.current?.setSwimming(movement)), [])
   useEffect(() => gameBus.on('complete', (nextResult) => {
@@ -131,13 +178,26 @@ function App() {
   }), [preferences.sound])
 
   useEffect(() => gameBus.on('gameOver', () => {
-    setLevel(1)
+    setDeathLevel(level)
     setResult(null)
     setPaused(false)
-    setRunResults([])
+    if (difficulty === 'hardcore') setRunResults([])
     setScreen('death')
     sound('death')
-  }), [preferences.sound])
+  }), [preferences.sound, difficulty, level])
+
+  useEffect(() => {
+    const updateOrientation = () => setRotateRequired(needsLandscape())
+    const updateFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    window.addEventListener('resize', updateOrientation)
+    window.screen.orientation?.addEventListener('change', updateOrientation)
+    document.addEventListener('fullscreenchange', updateFullscreen)
+    return () => {
+      window.removeEventListener('resize', updateOrientation)
+      window.screen.orientation?.removeEventListener('change', updateOrientation)
+      document.removeEventListener('fullscreenchange', updateFullscreen)
+    }
+  }, [])
 
   useEffect(() => {
     if (!soundscapeRef.current) soundscapeRef.current = new Soundscape()
@@ -169,12 +229,12 @@ function App() {
   }, [screen, paused])
 
   useEffect(() => {
-    if (screen === 'playing') gameBus.emit(paused ? 'pause' : 'resume')
-  }, [paused, screen])
+    if (screen === 'playing') gameBus.emit(paused || loading || rotateRequired ? 'pause' : 'resume')
+  }, [paused, loading, rotateRequired, screen])
 
   useEffect(() => {
-    if (screen !== 'playing' || paused) soundscapeRef.current?.stopSwimming()
-  }, [screen, paused])
+    if (screen !== 'playing' || paused || loading || rotateRequired) soundscapeRef.current?.stopSwimming()
+  }, [screen, paused, loading, rotateRequired])
 
   const startLevel = (id: LevelId) => {
     if (id === 1) setRunResults([])
@@ -186,6 +246,17 @@ function App() {
   }
 
   const launchLevel = () => {
+    if (showLoadingTimer.current) clearTimeout(showLoadingTimer.current)
+    if (readyTimer.current) clearTimeout(readyTimer.current)
+    loadingShownAt.current = null
+    setLoadingProgress(0)
+    setLoading(true)
+    setShowLoading(false)
+    showLoadingTimer.current = setTimeout(() => {
+      loadingShownAt.current = performance.now()
+      setShowLoading(true)
+      showLoadingTimer.current = null
+    }, 220)
     setScreen('playing')
     sound('tap')
   }
@@ -197,14 +268,28 @@ function App() {
       return
     }
     if ([1, 2, 3, 4].every((id, index) => runResults[index]?.level === id)) {
-      const nextHighScores: HighScores = {
-        bestTime: highScores.bestTime === null ? totalTime : Math.min(highScores.bestTime, totalTime),
-        bestStars: highScores.bestStars === null ? totalStars : Math.max(highScores.bestStars, totalStars),
-      }
+      const nextHighScores: HighScores = { ...highScores, [difficulty]: Math.max(highScores[difficulty] ?? 0, totalScore) }
       setHighScores(nextHighScores)
       try { localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(nextHighScores)) } catch { /* private browsing can block storage */ }
     }
     setScreen('victory')
+  }
+
+  const toggleFullscreen = async () => {
+    setFullscreenError('')
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      } else if (appRef.current?.requestFullscreen) {
+        await appRef.current.requestFullscreen()
+        const orientation = window.screen.orientation as ScreenOrientation & { lock?: (mode: 'landscape') => Promise<void> }
+        try { await orientation?.lock?.('landscape') } catch { /* manual rotation remains available */ }
+      } else {
+        setFullscreenError('Fullskjerm støttes ikke i denne nettleseren. Roter skjermen manuelt.')
+      }
+    } catch {
+      setFullscreenError('Fullskjerm ble blokkert. Åpne spillet direkte eller tillat fullskjerm for iframen.')
+    }
   }
 
   const pauseGame = () => {
@@ -220,8 +305,12 @@ function App() {
   const levelData = LEVELS[level]
 
   return (
-    <main className={`app ${preferences.reducedMotion ? 'reduced-motion' : ''}`}>
+    <main ref={appRef} className={`app ${preferences.reducedMotion ? 'reduced-motion' : ''}`}>
       <div className="screen-transition-veil" key={`${screen}-${level}`} aria-hidden="true" />
+      <button className="fullscreen-button" type="button" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Avslutt fullskjerm' : 'Vis spillet i fullskjerm'} title={isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm'}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={isFullscreen ? 'M9 3v6H3m12-6v6h6M3 15h6v6m12-6h-6v6' : 'M3 9V3h6m6 0h6v6M3 15v6h6m12-6v6h-6'} /></svg>
+      </button>
+      {fullscreenError && <p className="fullscreen-error" role="status">{fullscreenError}</p>}
       {screen === 'menu' && (
         <section className="menu-screen water-bg">
           <RiverBackdrop />
@@ -230,6 +319,11 @@ function App() {
             <h1>Villaks<br /><em>Reisen hjem</em></h1>
             <p className="subtitle">Fra elva til havet – og tilbake</p>
             <div className="menu-actions">
+              <div className="difficulty-choice" role="group" aria-label="Vanskelighetsgrad">
+                <button type="button" className={difficulty === 'normal' ? 'selected' : ''} aria-pressed={difficulty === 'normal'} onClick={() => setDifficulty('normal')}>Normal</button>
+                <button type="button" className={difficulty === 'hardcore' ? 'selected' : ''} aria-pressed={difficulty === 'hardcore'} onClick={() => setDifficulty('hardcore')}>Hardcore</button>
+              </div>
+              <p className="difficulty-description">{difficulty === 'normal' ? 'Mister du alle liv, prøver du samme nivå igjen.' : 'Mister du alle liv, starter hele reisen på nytt.'}</p>
               <button className="primary-button" onClick={() => startLevel(1)}><span>Start spillet</span><b aria-hidden="true">→</b></button>
             </div>
           </div>
@@ -255,6 +349,7 @@ function App() {
         <section className="game-screen">
           <SalmonGame level={level} reducedMotion={preferences.reducedMotion} sound={preferences.sound} />
           <GameHud hud={hud} paused={paused} onPause={paused ? resumeGame : pauseGame} />
+          {loading && showLoading && <div className="loading-shade" role="status" aria-live="polite"><div className="loading-card glass-panel"><p className="kicker">Nivå {level}</p><h2>Laster…</h2><div className="loading-bar" role="progressbar" aria-label="Laster nivå" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><p>{loadingProgress}%</p></div></div>}
           {paused && (
             <div className="pause-shade">
               <div className="pause-card glass-panel">
@@ -269,7 +364,7 @@ function App() {
         </section>
       )}
 
-      {screen === 'death' && <GameOverScreen onRestart={() => startLevel(1)} onMenu={() => setScreen('menu')} />}
+      {screen === 'death' && <GameOverScreen difficulty={difficulty} level={deathLevel} onRestart={() => startLevel(difficulty === 'hardcore' ? 1 : deathLevel)} onMenu={() => setScreen('menu')} />}
 
       {screen === 'result' && result && (
         <ModalPage title="Nivå fullført!" eyebrow={LEVELS[result.level].eyebrow} className="result-page">
@@ -290,18 +385,18 @@ function App() {
             <h2>Du fant veien hjem!</h2>
             <p>Etter en lang reise har villaksen kommet tilbake til Mandalselva. En ny generasjon kan nå vokse opp mellom grussteinene.</p>
             <div className="victory-stats" aria-label="Resultater for reisen">
-              <span><b>{secondsLabel(totalTime)}</b><small>Tid denne reisen</small></span>
-              <span><b>{totalStars}<em>/12</em></b><small>Stjerner totalt</small></span>
+              <span><b>{totalScore.toLocaleString('nb-NO')}</b><small>Poeng · {difficulty === 'hardcore' ? 'Hardcore' : 'Normal'}</small></span>
             </div>
             <div className="victory-records">
-              <p className="kicker">Personlige rekorder</p>
-              <div><span><small>Beste tid</small><strong>{highScores.bestTime === null ? '–' : secondsLabel(highScores.bestTime)}</strong></span><span><small>Flest stjerner</small><strong>{highScores.bestStars === null ? '–' : `${highScores.bestStars}/12`}</strong></span></div>
+              <p className="kicker">Beste poengsum</p>
+              <div><span><small>Normal</small><strong>{highScores.normal === null ? '–' : highScores.normal.toLocaleString('nb-NO')}</strong></span><span><small>Hardcore</small><strong>{highScores.hardcore === null ? '–' : highScores.hardcore.toLocaleString('nb-NO')}</strong></span></div>
             </div>
             <button className="primary-button" onClick={() => startLevel(1)}><span>Spill igjen</span><b aria-hidden="true">↻</b></button>
             <button className="quiet-button" onClick={() => setScreen('menu')}>Til hovedmenyen</button>
           </div>
         </section>
       )}
+      {rotateRequired && <div className="rotate-overlay" role="dialog" aria-modal="true" aria-label="Roter skjermen"><div className="rotate-card glass-panel"><span className="rotate-symbol" aria-hidden="true">↻</span><h2>Roter skjermen</h2><p>Spillet må spilles i liggende format. Snu mobilen eller nettbrettet for å fortsette.</p><button className="secondary-button" type="button" onClick={toggleFullscreen}>Prøv fullskjerm</button></div></div>}
     </main>
   )
 }
@@ -321,18 +416,18 @@ function RiverBackdrop() {
   </div>
 }
 
-function GameOverScreen({ onRestart, onMenu }: { onRestart: () => void; onMenu: () => void }) {
+function GameOverScreen({ difficulty, level, onRestart, onMenu }: { difficulty: Difficulty; level: LevelId; onRestart: () => void; onMenu: () => void }) {
   return <section className="transition-screen death-transition" aria-live="assertive">
     <div className="death-current" aria-hidden="true"><i /><i /><i /><i /></div>
-    <div className="transition-fish sinking-fish" aria-hidden="true"><img src={salmonParrArt} alt="" /></div>
+    <div className="transition-fish sinking-fish" aria-hidden="true"><img src={SALMON_STAGE_ART[level]} alt="" /></div>
     <div className="game-over-card glass-panel">
       <p className="kicker">Reisen tok slutt</p>
     <div className="game-over-hearts" aria-label="Ingen liv igjen" role="img">
       {[1, 2, 3].map((heart) => <svg key={heart} viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.2 10.6 20C5.3 15.2 2 12.2 2 8.5A5.5 5.5 0 0 1 7.5 3c1.8 0 3.4.8 4.5 2.1A5.9 5.9 0 0 1 16.5 3 5.5 5.5 0 0 1 22 8.5c0 3.7-3.3 6.7-8.6 11.5L12 21.2Z" /></svg>)}
     </div>
-      <h2>Spillet er over</h2>
-      <p>Villaksen fikk ikke fullført reisen denne gangen. Prøv igjen fra starten.</p>
-      <button className="primary-button" onClick={onRestart}><span>Start en ny reise</span><b aria-hidden="true">↻</b></button>
+      <h2>{difficulty === 'hardcore' ? 'Spillet er over' : 'Ingen liv igjen'}</h2>
+      <p>{difficulty === 'hardcore' ? 'Hardcore: Reisen starter på nytt fra første nivå.' : `Du kan prøve nivå ${level} igjen uten å miste nivåene du allerede har fullført.`}</p>
+      <button className="primary-button" onClick={onRestart}><span>{difficulty === 'hardcore' ? 'Start en ny reise' : `Prøv nivå ${level} igjen`}</span><b aria-hidden="true">↻</b></button>
       <button className="quiet-button" onClick={onMenu}>Til hovedmenyen</button>
     </div>
   </section>

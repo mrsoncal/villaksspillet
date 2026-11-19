@@ -136,6 +136,8 @@ export class SalmonScene extends Phaser.Scene {
   }
 
   preload() {
+    gameBus.emit('loading', { level: this.level, progress: 0 })
+    this.load.on('progress', (progress: number) => gameBus.emit('loading', { level: this.level, progress }))
     if (!this.textures.exists('water-depth-v2')) this.load.image('water-depth-v2', waterTextureUrl)
     if (!this.textures.exists('salmon-stage-1')) this.load.image('salmon-stage-1', salmonParrUrl)
     if (!this.textures.exists('salmon-stage-2')) this.load.image('salmon-stage-2', salmonSmoltUrl)
@@ -236,6 +238,7 @@ export class SalmonScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, removeBusListeners)
     this.events.once(Phaser.Scenes.Events.DESTROY, removeBusListeners)
     this.emitHud()
+    gameBus.emit('ready', this.level)
   }
 
   private drawEnvironment() {
@@ -1965,7 +1968,7 @@ export class SalmonScene extends Phaser.Scene {
     this.cameras.main.flash(this.reducedMotion ? 40 : 170, 235, 92, 70)
     this.player.setAlpha(0.55)
     if (this.lives <= 0) {
-      this.killPlayer('Alle liv er tapt – reisen starter på nytt')
+      this.killPlayer('Alle liv er tapt')
       return
     }
     this.emitHud()
@@ -2406,7 +2409,7 @@ export class SalmonScene extends Phaser.Scene {
 
   private updateInteractions() {
     if (this.intakeHazard?.dangerArea.contains(this.player.x, this.player.y)) {
-      this.killPlayer('Laksen ble sugd inn i kraftverksinntaket – reisen starter på nytt')
+      this.killPlayer('Laksen ble sugd inn i kraftverksinntaket')
       return
     }
     for (const item of this.foodItems) {

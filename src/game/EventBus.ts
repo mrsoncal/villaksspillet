@@ -3,6 +3,8 @@ import type { SoundEffect, SwimmingSound } from '../audio/Soundscape'
 
 type GameEvents = {
   hud: HudState
+  loading: { level: HudState['level']; progress: number }
+  ready: HudState['level']
   complete: GameResult
   gameOver: undefined
   pause: undefined

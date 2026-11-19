@@ -32,16 +32,16 @@ Produksjonsfilene legges i `dist/`.
 - Langstrakte steiner bruker sammensatte, roterte kollisjonsfelt. Laksens kroppshitboks følger den smale, solide torsoen slik at synlige åpninger faktisk kan brukes. Hvert sjøgresstuft har et eget formtilpasset skjulområde som fisken kan svømme gjennom.
 - Når laksen svømmer inn i et skjulområde, blir den delvis gjennomsiktig og en myk, pulserende vignett viser tydelig at rovfisken ikke ser den like godt.
 - Skjulområdene har ingen kunstige markeringer i terrenget. Maten plasseres tilfeldig med størst sannsynlighet i sjøgress, har sømløs og svært begrenset lokal drift, og beveger kroppen i ledd. En tett rød kontur følger formen, og laksen gir et kort visuelt «pop» når den spiser.
-- Når matmålet nås på nivå 1 og 3, forvandles laksen med lys, partikler og størrelsesovergang til modellen fra neste livsstadium. Mister spilleren alle tre liv, starter reisen på nytt fra nivå 1.
+- Når matmålet nås på nivå 1 og 3, forvandles laksen med lys, partikler og størrelsesovergang til modellen fra neste livsstadium.
 - Utgangene på nivå 1–3 er volumetriske undervannsgløder helt ved enden av området. Hele den spillbare høyrekanten fungerer som overgang når målet er oppfylt, slik at spilleren ikke må treffe et lite usynlig punkt inne i lyset.
 - Elvestrømmen går med spilleren på nivå 1 og mot spilleren på nivå 4. Terrengoppsettet er ellers bygget etter de samme reglene.
 - Nivå 2 kombinerer matinnsamling og elveterrenget med to mer aggressive rovfisk og et fotorealistisk kraftverksinntak. Inntaket sender pulserende sugestøt gjennom vannet; steiner og sjøgress demper suget, men kontakt med selve risten er umiddelbart dødelig. Rovfiskene planlegger og styrer rutene sine utenom hele kraftverksområdet, og den trygge passasjen markeres av den samme naturlige undervannsgløden som nivå 1.
 - Nivå 3 er et eget, betydelig større åpent havbiom uten strand eller steinhindre. Både bredden og dybden er utvidet, mørke dybdesoner avgrenser området, og store felt med dyphavstare gir skjul. Tre anatomisk korrigerte torsker patruljerer som klassiske rovfisk, mens den langt større og raske selen dekker større områder, oppdager laksen på lengre avstand og angriper i korte, kraftige utfall. En tett, 17-leddet rigg holder selens torso stabil mens bakpartiet og bakluffene slår raskt fra side til side. Krillens røde glød beregnes direkte fra den animerte silhuetten og følger derfor kroppen og beina uten å sveve utenfor figuren. Hjemreisen markeres av den samme naturlige undervannsgløden som i de tidligere nivåene.
 - Nivå 4 er en egen, nesten dobbelt så lang hjemvandringselv med terreng, sjøgress og motstrøm gjennom hele strekningen. Tre semirealistiske gytebunner er spredt utover den siste delen: stille silt, bløt mudderbunn og ren oksygenrik grus. Bunnfeltene fargetilpasses elva og dekkes av et maskert, bevegelig vannlag som lar lysbrytningen fortsette over dem. Åtte fotorealistiske metallkroker kastes mot tilfeldige punkter fra begge bredder, driver kort i vannet, sveives inn og kastes ut på nytt etter en variabel pause. Snøret er festet direkte i den øverste metallringen, og kroken følger til enhver tid snøreretningen med maksimalt ti graders tilfeldig avvik. Bare selve kroken skader laksen.
 - Et felles blågrønt undervannsfilter graderer fisk, steiner, vegetasjon og øvrige spillressurser. Kryssende vannlag, drivende bølgelinjer, pulserende lysfelter og levende fargedybde gjør vannet dynamisk, mens HUD og menyer forblir klare og lettleste.
-- Kortvarig beskyttelse etter skade. Mister spilleren alle tre liv, starter hele reisen på nytt fra nivå 1.
-- Tre stjerner vurderer den enkelte svømmeturen, men lagres ikke som permanent progresjon og låser ikke opp innhold. Hver ny runde starter som en ny reise fra nivå 1.
-- Pausemeny, lyd av/på og responsivt grensesnitt.
+- Kortvarig beskyttelse etter skade. I normal modus prøves samme nivå igjen etter tre tapte liv; hardcore starter hele reisen på nytt fra nivå 1.
+- Tre stjerner vurderer hvert nivå. Sluttpoengsummen kombinerer stjernene med en tidsbonus; personlige rekorder lagres separat for normal og hardcore, uten å låse opp innhold.
+- Pausemeny, lyd av/på, fullskjermknapp, lasteskjerm og liggende mobil-/nettbrettvisning.
 - Ingen konto, sporing, annonser eller kjøp.
 
 ## Struktur
@@ -123,7 +123,7 @@ Lim inn dette i en **Custom HTML / Tilpasset HTML**-blokk på den siden eller i 
 ></iframe>
 ```
 
-Rammen fyller bredden til seksjonen og tilpasser høyden til skjermen. Når en push til `main` er publisert av GitHub Pages, viser den samme rammen automatisk den oppdaterte versjonen. WordPress trenger ingen tilgang til spillets kode eller egen plugin: spillet bruker verken WordPress-innlogging eller WordPress-innhold.
+Rammen fyller bredden til seksjonen og tilpasser høyden til skjermen. `allow="fullscreen"` og `allowfullscreen` er nødvendig for spillets fullskjermknapp. På mobil og nettbrett må spilleren rotere til liggende format; automatisk skjermlås forsøkes bare der nettleseren støtter det. Når en push til `main` er publisert av GitHub Pages, viser den samme rammen automatisk den oppdaterte versjonen. WordPress trenger ingen tilgang til spillets kode eller egen plugin: spillet bruker verken WordPress-innlogging eller WordPress-innhold.
 
 WordPress kan fjerne `<iframe>` fra Custom HTML hvis kontoen ikke har tillatelse til ufiltrert HTML. I så fall må en nettstedsadministrator gi riktig tilgang eller legge inn rammen i en tillatt mal/blokk.
 

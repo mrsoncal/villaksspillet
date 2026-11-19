@@ -238,6 +238,28 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 .menu-card h1 em, .menu-card .subtitle { color: var(--park-stone); }
 .menu-credit { position: absolute; z-index: 2; right: max(24px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); margin: 0; color: var(--park-stone); font-size: .82rem; font-weight: 600; text-align: right; text-shadow: 0 1px 5px rgba(0, 28, 36, .75); }
 .menu-actions { max-width: 360px; }
+.difficulty-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.difficulty-choice button { min-height: 45px; border: 1px solid rgba(255,255,255,.52); background: rgba(1,53,53,.2); color: var(--park-white); font: inherit; font-weight: 800; cursor: pointer; }
+.difficulty-choice button.selected { border-color: var(--park-green); background: var(--park-green); color: #183e42; }
+.difficulty-choice button:focus-visible, .fullscreen-button:focus-visible { outline: 3px solid var(--park-orange); outline-offset: 3px; }
+.difficulty-description { min-height: 2.5em; margin: 0 0 5px; color: var(--park-stone); font-size: .82rem; line-height: 1.4; }
+.fullscreen-button { position: absolute; z-index: 60; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); display: grid; place-items: center; width: 57px; height: 57px; border: 1px solid var(--park-orange); background: var(--park-orange); color: #3c2819; cursor: pointer; box-shadow: 0 10px 25px rgba(1,28,34,.24); }
+.fullscreen-button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fullscreen-error { position: absolute; z-index: 61; top: 78px; right: 14px; max-width: min(330px, 70vw); padding: 10px 14px; background: var(--park-fjord); color: var(--park-white); font-size: .8rem; box-shadow: 0 10px 25px rgba(1,28,34,.24); }
+.hud-top .pause-button { margin-right: 67px; }
+.loading-shade, .rotate-overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(1,28,39,.84); backdrop-filter: blur(10px); }
+.loading-shade { z-index: 25; }
+.loading-card, .rotate-card { width: min(390px, 92vw); padding: 32px; text-align: center; border-top: 5px solid var(--park-green); }
+.loading-card h2, .rotate-card h2 { margin: 0 0 18px; }
+.loading-card > p:last-child { margin: 10px 0 0; color: var(--park-stone); font-variant-numeric: tabular-nums; }
+.loading-bar { height: 10px; background: rgba(1,53,53,.4); overflow: hidden; }
+.loading-bar span { display: block; height: 100%; background: var(--park-green); transition: width .15s ease; }
+.rotate-overlay { z-index: 70; }
+.rotate-card p { color: var(--park-stone); line-height: 1.45; }
+.rotate-card .secondary-button { width: 100%; margin-top: 8px; }
+.rotate-symbol { display: block; margin-bottom: 10px; color: var(--park-orange); font-size: 3rem; line-height: 1; }
+.victory-stats span { max-width: 340px; }
+.victory-stats b { font-size: clamp(2.4rem, 7vw, 4rem); color: var(--park-orange); font-variant-numeric: tabular-nums; }
 .primary-button, .secondary-button, .text-button, .quiet-button { border-radius: 0; }
 .primary-button { background: var(--park-orange); color: #3c2819; box-shadow: 0 10px 25px rgba(1,28,34,.24); font-weight: 800; }
 .primary-button b { flex-basis: auto; width: auto; height: auto; border-radius: 0; background: none; font-size: 1.35rem; }
@@ -270,6 +292,8 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
   .menu-screen { overflow-y: auto; align-items: start; padding-bottom: 58px; }
   .menu-card { margin: auto; padding: 26px 22px; border-radius: 0; }
   .menu-credit { right: max(16px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); font-size: .76rem; }
+  .fullscreen-button { width: 49px; height: 49px; top: max(9px, env(safe-area-inset-top)); right: max(9px, env(safe-area-inset-right)); }
+  .hud-top .pause-button { margin-right: 55px; }
   .how-grid { grid-template-columns: 1fr; gap: 9px; }.instruction { display: grid; grid-template-columns: 62px 1fr; text-align: left; padding: 14px; }.instruction-icon { grid-row: 1 / span 2; width: 52px; height: 52px; margin: 0; font-size: 1.3rem; }.instruction h3 { margin: 4px 0 2px; }.instruction p { margin: 0; }.instruction-icon b { width: 21px; height: 21px; }
   .intro-screen { grid-template-columns: 1fr; padding: 18px; overflow-y: auto; }.level-art { min-height: 145px; max-height: 25vh; }.stage-fish { width: min(92%, 360px); max-height: 180px; }.intro-card { margin: 0 auto; padding: 28px 23px; border-radius: 0; }.intro-card h2 { font-size: 2.15rem; }.intro-card > p:not(.kicker) { font-size: .92rem; }.goal-box { margin: 18px 0; padding: 12px; }
   .hud { padding: max(9px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-right)) max(9px, env(safe-area-inset-bottom)) max(9px, env(safe-area-inset-left)); }
@@ -279,14 +303,15 @@ h2 { line-height: 1.06; letter-spacing: -.035em; }
 }
 
 @media (max-width: 430px) {
-  .hud-top { display: grid; grid-template-columns: auto minmax(0, 1fr) 49px; }
+  .hud-top { display: grid; grid-template-columns: auto minmax(0, 1fr) 49px 49px; }
   .life-meter { grid-column: 1; grid-row: 1; }
   .stamina-meter { grid-column: 2; grid-row: 1; max-width: none; }
   .food-meter { grid-column: 1 / 3; grid-row: 2; width: max-content; min-width: 83px; }
-  .pause-button { grid-column: 3; grid-row: 1; margin-left: 0; }
+  .pause-button, .hud-top .pause-button { grid-column: 3; grid-row: 1; margin-left: 0; margin-right: 0; }
 }
 
 @media (max-height: 620px) and (orientation: landscape) {
+  .app { min-height: 0; }
   .menu-card { padding: 22px 32px; width: 580px; } h1 { font-size: 3.4rem; }.subtitle { margin-bottom: 15px; }.progress-note { display: none; }
   .intro-screen { grid-template-columns: .85fr 1.15fr; overflow-y: auto; }.level-art { min-height: 280px; max-height: none; }.intro-card { padding: 24px 30px; }.intro-card h2 { font-size: 2rem; margin-bottom: 10px; }.goal-box { margin: 10px 0; }.quiet-button { display: none; }
   .modal-card { padding: 26px 48px; }.modal-card h2 { font-size: 2.5rem; margin-bottom: 10px; }.how-grid { grid-template-columns: repeat(3, 1fr); }.instruction { display: block; text-align: center; }.instruction-icon { margin: 0 auto 8px; }.instruction p { font-size: .75rem; }.fact-card { margin: 12px auto; padding: 13px; }.stars { font-size: 3rem; }.result-page .stars { font-size: 3.2rem; margin: 0 0 8px; }.result-stats { margin: 10px 0; }
